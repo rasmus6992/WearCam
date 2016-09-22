@@ -76,6 +76,7 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
     private GalleryViewAdapter adapter;
     private ViewPager viewPager;
     private TextView upTimeTextView;
+    InputStream assetInputStream;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -314,17 +315,24 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
             throw new IllegalArgumentException("Asset must be non-null");
         }
 
-        ConnectionResult result = mGoogleApiClient.blockingConnect(100, TimeUnit.MILLISECONDS);
-        if (!result.isSuccess()) {
-            return null;
-        }
+       new Thread(new Runnable() {
+            @Override
+            public void run() {
 
-        InputStream assetInputStream = Wearable.DataApi.getFdForAsset(mGoogleApiClient, asset).await().getInputStream();
+                ConnectionResult result = mGoogleApiClient.blockingConnect(100, TimeUnit.MILLISECONDS);
 
-        if (assetInputStream == null) {
-            Log.w(TAG, "Requested an unknown Asset.");
-            return null;
-        }
+                if (!result.isSuccess()) {
+                    return ;
+                }
+
+                assetInputStream  = Wearable.DataApi.getFdForAsset(mGoogleApiClient, asset).await().getInputStream();
+
+                if (assetInputStream == null) {
+                    Log.w(TAG, "Requested an unknown Asset.");
+                    return ;
+                }
+            }
+        }).start();
         return BitmapFactory.decodeStream(assetInputStream);
     }
 
